@@ -1,0 +1,9 @@
+tests:
+  - healthStatus:
+      status: Healthy
+      message: 'Connector running'
+    inputPath: testdata/connect-healthy.yaml
+  - healthStatus:
+      status: Degraded
+      message: 'connect Rest API request failed: Could not read properties from file'
+    inputPath: testdata/connect-failure.yaml
