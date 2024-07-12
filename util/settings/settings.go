@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"path"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -515,6 +516,8 @@ const (
 	RespectRBAC            = "resource.respectRBAC"
 	RespectRBACValueStrict = "strict"
 	RespectRBACValueNormal = "normal"
+	// hideSecretAnnotations is the key to configure annotations to hide in secret resource
+	hideSecretAnnotations = "hide.secret.annotations"
 )
 
 var sourceTypeToEnableGenerationKey = map[v1alpha1.ApplicationSourceType]string{
@@ -2256,4 +2259,24 @@ func (mgr *SettingsManager) GetExcludeEventLabelKeys() []string {
 		}
 	}
 	return labelKeys
+}
+
+func (mgr *SettingsManager) GetHideSecretAnnotations() map[string]bool {
+	annotsKeys := make(map[string]bool)
+	argoCDCM, err := mgr.getConfigMap()
+	if err != nil {
+		log.Error(fmt.Errorf("failed getting configmap: %v", err))
+		return nil
+	}
+	if value, ok := argoCDCM.Data[hideSecretAnnotations]; ok {
+		annots := strings.Split(value, "\n")
+		for _, a := range annots {
+			a = regexp.MustCompile(`^\s*-`).ReplaceAllString(a, "")
+			a := strings.TrimSpace(a)
+			if a != "" {
+				annotsKeys[a] = true
+			}
+		}
+	}
+	return annotsKeys
 }

@@ -1602,3 +1602,39 @@ func TestReplaceStringSecret(t *testing.T) {
 	result = ReplaceStringSecret("my-value", secretValues)
 	assert.Equal(t, "my-value", result)
 }
+
+func TestSettingsManager_GetHideSecretAnnotations(t *testing.T) {
+	tests := []struct {
+		name   string
+		input  string
+		output map[string]bool
+	}{
+		{
+			name:   "Empty input",
+			input:  "",
+			output: map[string]bool{},
+		},
+		{
+			name: "Correct format",
+			input: `- example.com/token-secret.value
+							- token`,
+			output: map[string]bool{"example.com/token-secret.value": true, "token": true},
+		},
+		{
+			name: "Partially correct format with each key on new line - returns correct keys",
+			input: `  example.com/token-secret.value  
+							-token`,
+			output: map[string]bool{"example.com/token-secret.value": true, "token": true},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, settingsManager := fixtures(map[string]string{
+				hideSecretAnnotations: tt.input,
+			})
+			keys := settingsManager.GetHideSecretAnnotations()
+			assert.Equal(t, len(tt.output), len(keys))
+			assert.Equal(t, tt.output, keys)
+		})
+	}
+}
